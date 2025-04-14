@@ -24,12 +24,12 @@ class DataCollector(ABC):
             period (str, optional): specify the frequency of data. Defaults to 'daily'.
         """
         file_path = os.path.join(
-            './data',
+            '../data',
             f"{self.symbol}_{period}.csv"
         )
         
         if period == "daily":
-            self.daily_data.to_csv(file_path)
+            self.daily_data.to_csv(file_path, index=False)
             
         print(f"{symbol}的{period}数据已保存至: {file_path}")
 
@@ -57,9 +57,13 @@ class AkshareCollector(DataCollector):
             symbol=self.symbol
         )
 
-        used_columns = ['date', 'open', 'high', 'low', 'close', 'volume']
+        used_columns = ['datetime', 'open', 'high', 'low', 'close', 'volume', 'openinterest']
+        bt_format = {'date': "datetime",
+                     'hold': 'openinterest'}
         self.daily_data['date'] = pd.to_datetime(self.daily_data['date'])
+        self.daily_data['date'] = self.daily_data['date'].dt.strftime("%Y-%m-%d %H:%M:%S")
         self.daily_data.set_index('date', inplace=True, drop=False)
+        self.daily_data.rename(columns=bt_format, inplace=True)
         print(f"[INFO] {symbol}数据已取回...")
         
         return self.daily_data[used_columns]
@@ -80,5 +84,6 @@ if __name__ == "__main__":
     print(f"获取到 {len(data)} 条数据")
     print("数据样例:")
     print(data.head(3))
+    # print(data['datetime'][1])
 
     collector.save_to_csv(period)

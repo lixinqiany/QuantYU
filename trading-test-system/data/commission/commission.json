@@ -1,0 +1,9 @@
+{
+    "RB": {
+        "commission": 0.0001,
+        "mult": 10, 
+        "stocklike": false,
+        "margin": 0.07,
+        "commtype": "COMM_PERC"
+    }
+}
