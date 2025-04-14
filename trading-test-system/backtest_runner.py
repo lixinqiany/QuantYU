@@ -5,7 +5,11 @@ from datetime import datetime, timedelta
 from utils.commission import GenericCommInfo
 
 class BackTester():
-    def __init__(self, name: str, symbol: str, period: str, beginning: datetime, end: datetime, cash=10000):
+    def __init__(self, name: str, 
+                 symbol: str, 
+                 period: str, 
+                 beginning: datetime, end: datetime, 
+                 cash=10000):
         self.name = name
         self.symbol = symbol
         self.period = period
@@ -81,10 +85,13 @@ class BackTester():
         
 
 if __name__=="__main__":
+    from strategy.dual_ma import DualMovingAverageStrategy
+    
     today = datetime.today()
-    diff = timedelta(days=100)
+    diff = timedelta(days=200)
     start = today - diff
     tester = BackTester("RB", "RB2505", "daily", start, today)
+    tester.add_strategy(DualMovingAverageStrategy)
     tester.run()
         
         

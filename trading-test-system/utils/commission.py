@@ -5,22 +5,18 @@ class GenericCommInfo(bt.CommInfoBase):
     params = (
         ('commission', 0.0),
         ('mult', 1),
-        ('margin', None),
-        ('commtype', bt.CommInfoBase.COMM_PERC),
-        ('stocklike', False)
+        ('margin', 0.1),
+        ('commtype', bt.CommInfoBase.COMM_FIXED),
+        ('stocklike', False),
+        ('fixed_tax', 2)
     )
 
-    def _getmargin(self, price):
-        # 自动判断保证金模式
-        if isinstance(self.p.margin, float) and 0 < self.p.margin < 1:
-            # 比例模式: 保证金 = 价格 × 合约乘数 × 比例
-            return price * self.p.mult * self.p.margin
-        else:
-            # 固定模式: 直接返回保证金数值
-            return self.p.margin
+    def get_margin(self, price):
+        #print(price * self.p.mult * self.p.margin)
+        return price * self.p.mult * self.p.margin
         
     def _getcommission(self, size, price, pseudoexec):
-        if self._commtype == self.COMM_PERC:
-            return abs(size) * self.p.commission * price * self.p.mult
-
-        return abs(size) * self.p.commission
+        fixed = abs(size) * self.p.fixed_tax
+        exchange = abs(size) * price * self.p.commission
+        # print(f"fix={fixed},交易所{exchange}")
+        return fixed + exchange

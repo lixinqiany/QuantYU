@@ -1,9 +1,10 @@
 {
     "RB": {
         "commission": 0.0001,
+        "fixed_tax": 1.5,
         "mult": 10, 
         "stocklike": false,
-        "margin": 0.07,
-        "commtype": "COMM_PERC"
+        "margin": 0.1,
+        "commtype": "COMM_FIXED"
     }
 }

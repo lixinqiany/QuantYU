@@ -18,26 +18,25 @@ class DualMovingAverageStrategy(bt.Strategy):
     order_pct: 每次交易仓位比例（默认95%）
     """
     params = (
-        ('fast_period', 10),
-        ('slow_period', 30),
-        ('rsi_period', 14),
-        ('rsi_upper', 70),
-        ('order_pct', 0.95),
+        ('fast_period', 5),
+        ('slow_period', 10),
+        ('rsi_period', 7),
+        ('rsi_upper', 80),
+        ('order_pct', 0.9),
+    )
+    
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(message)s',
     )
 
     def __init__(self):
         # 初始化技术指标
         self.fast_ma = SMA(
-            self.data.close, 
             period=self.p.fast_period
         )
-        self.slow_ma = SMA(
-            self.data.close, 
+        self.slow_ma = SMA( 
             period=self.p.slow_period
-        )
-        self.rsi = RSI(
-            self.data.close, 
-            period=self.p.rsi_period
         )
         
         # 交叉信号指标
@@ -49,18 +48,24 @@ class DualMovingAverageStrategy(bt.Strategy):
     def next(self):
         """策略逻辑执行"""
         # 有持仓时的处理
+        print(f'{self.data.datetime.date()}')
+        print(f"当前价格{self.data.close[0]}")
+        print('当前可用资金', self.broker.getcash())
+        print('当前总资产', self.broker.getvalue())
+        #print('当前持仓量', self.broker.getposition(self.data).size)
+        #print('当前持仓成本', self.broker.getposition(self.data).price)
+        #print(f'保证金占用: {self.broker.getmargin(pos)}')
         if self.position:
             # 死叉或RSI超卖时平仓
-            if self.crossover < 0 or self.rsi > self.p.rsi_upper:
-                self.close()
+            if self.crossover < 0:
+                self.close(size=1)
+                
         
         # 无持仓时的处理        
         else:
             # 金叉时买入
-            if self.crossover > 0 and self.rsi < self.p.rsi_upper:
-                self.order_target_percent(
-                    target=self.p.order_pct
-                )
+            if self.crossover > 0 :
+                self.buy(size=1)
 
     def notify_order(self, order):
         """订单状态处理"""
@@ -70,10 +75,11 @@ class DualMovingAverageStrategy(bt.Strategy):
         if order.status == order.Completed:
             direction = '买入' if order.isbuy() else '卖出'
             print(
-                f'{direction}执行: 价格={order.executed.price:.2f} '
-                f'数量={order.executed.size} '
-                f'成本={order.executed.value:.2f} '
-                f'佣金={order.executed.comm:.2f}'
+                f'{self.data.datetime.date()} {direction}执行: '
+                f'价格={order.executed.price:.2f} '
+                f'数量={order.executed.size}手 '
+                f'保证金={order.executed.margin:.2f}元 '
+                f'佣金={order.executed.comm:.2f}元'
             )
             
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
