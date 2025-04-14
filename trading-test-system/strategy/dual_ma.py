@@ -24,11 +24,6 @@ class DualMovingAverageStrategy(bt.Strategy):
         ('rsi_upper', 80),
         ('order_pct', 0.9),
     )
-    
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(message)s',
-    )
 
     def __init__(self):
         # 初始化技术指标
@@ -48,10 +43,10 @@ class DualMovingAverageStrategy(bt.Strategy):
     def next(self):
         """策略逻辑执行"""
         # 有持仓时的处理
-        print(f'{self.data.datetime.date()}')
-        print(f"当前价格{self.data.close[0]}")
-        print('当前可用资金', self.broker.getcash())
-        print('当前总资产', self.broker.getvalue())
+        #print(f'{self.data.datetime.date()}')
+        #print(f"当前价格{self.data.close[0]}")
+        #print('当前可用资金', self.broker.getcash())
+        #print('当前总资产', self.broker.getvalue())
         #print('当前持仓量', self.broker.getposition(self.data).size)
         #print('当前持仓成本', self.broker.getposition(self.data).price)
         #print(f'保证金占用: {self.broker.getmargin(pos)}')
@@ -74,13 +69,38 @@ class DualMovingAverageStrategy(bt.Strategy):
             
         if order.status == order.Completed:
             direction = '买入' if order.isbuy() else '卖出'
-            print(
-                f'{self.data.datetime.date()} {direction}执行: '
-                f'价格={order.executed.price:.2f} '
-                f'数量={order.executed.size}手 '
-                f'保证金={order.executed.margin:.2f}元 '
-                f'佣金={order.executed.comm:.2f}元'
+            pos = self.broker.getposition(self.data).size
+            cash = self.broker.getcash()
+            value = self.broker.getvalue()
+            log_msg = (
+                f"{direction} "
+                f"价格={order.executed.price:.2f} "
+                f"手数={order.executed.size} "
+                f"佣金={order.executed.comm:.2f} "
+                f"当前持仓量={pos} "
+                f"当前可用资金={cash:.2f} "
+                f"当前总资产={value:.2f}"
             )
+            self.log('info', log_msg)
             
         elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-            print('订单未完成:', order.getstatusname())
+            status_name = order.getstatusname()
+            self.log('warning', f"订单异常: {status_name}")
+            
+    def log(self, level, msg):
+        dt = self.data.datetime.datetime().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # 颜色代码（可选，增强可读性）
+        colors = {
+            'info': '\033[94m',    # 蓝色
+            'warning': '\033[91m', # 红色
+            'reset': '\033[0m'     # 重置颜色
+        }
+        
+        # 组装带颜色的日志格式（如果不需要颜色可移除）
+        log_msg = (
+            f"{colors.get(level, '')}"
+            f"[{dt}] [{level.upper()}] {msg}"
+            f"{colors['reset']}"
+        )
+        print(log_msg)
