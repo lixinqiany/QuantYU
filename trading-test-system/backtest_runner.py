@@ -4,6 +4,7 @@ from backtrader.feeds import GenericCSVData
 from datetime import datetime, timedelta
 from utils.commission import GenericCommInfo
 import matplotlib.pyplot as plt
+from backtrader import TimeFrame
 
 class BackTester():
     def __init__(self, name: str, 
@@ -32,7 +33,6 @@ class BackTester():
         self.cerebro.addanalyzer(
             bt.analyzers.Returns, 
             _name='returns',
-            tann=252
         )
         # 回撤
         self.cerebro.addanalyzer(
@@ -41,6 +41,8 @@ class BackTester():
         )
         self.cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.02, _name="sharpe")
         self.cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
+        self.cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturn1", timeframe= TimeFrame.Days, compression=1)
+        self.cerebro.addanalyzer(bt.analyzers.TimeReturn, _name="timereturn5", timeframe= TimeFrame.Years, compression=2)
         
     def _get_commmission(self):
         fp = os.path.join(
@@ -100,7 +102,7 @@ class BackTester():
         print(f"总收益率: {analyzers.returns.get_analysis()}%")
         print(f"年化收益率: {analyzers.returns.get_analysis()['rnorm100']:.2f}%")
         print(f"夏普比率: {analyzers.sharpe.get_analysis()['sharperatio']}")
-        print(f"最大回撤: {analyzers.drawdown.get_analysis().max.drawdown:.2f}%")
+        print(f"最大回撤: {analyzers.drawdown.get_analysis()}%")
         print(f"最长回撤周期: {analyzers.drawdown.get_analysis().max.len} 根K线")
         
         trade_analysis = analyzers.trades.get_analysis()
@@ -108,6 +110,8 @@ class BackTester():
         print(f"总交易次数: {trade_analysis.total.closed}")
         print(f"胜率: {trade_analysis.won.total/trade_analysis.total.closed*100:.1f}%")
         print(f"盈亏比: {trade_analysis.won.pnl.average/abs(trade_analysis.lost.pnl.average):.2f}")
+        print(analyzers.timereturn1.get_analysis())
+        #print(analyzers.timereturn5.get_analysis())
     
 
 if __name__=="__main__":
