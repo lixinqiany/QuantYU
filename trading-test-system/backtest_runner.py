@@ -3,6 +3,7 @@ import backtrader as bt
 from backtrader.feeds import GenericCSVData
 from datetime import datetime, timedelta
 from utils.commission import GenericCommInfo
+import matplotlib.pyplot as plt
 
 class BackTester():
     def __init__(self, name: str, 
@@ -30,13 +31,16 @@ class BackTester():
         # 收益率
         self.cerebro.addanalyzer(
             bt.analyzers.Returns, 
-            _name='returns'
+            _name='returns',
+            tann=252
         )
         # 回撤
         self.cerebro.addanalyzer(
             bt.analyzers.DrawDown, 
             _name='drawdown'
         )
+        self.cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.02, _name="sharpe")
+        self.cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name='trades')
         
     def _get_commmission(self):
         fp = os.path.join(
@@ -81,8 +85,30 @@ class BackTester():
         
     def run(self):
         results = self.cerebro.run()
+        self._print_analysis(results[0])
         self.cerebro.plot(style="candlestick")
         
+        return results
+    
+    def _print_analysis(self, result):
+        """打印专业化的回测报告"""
+        analyzers = result.analyzers
+        
+        print("\n========== 专业回测分析报告 ==========")
+        print(f"初始资金: {self.cash:.2f}")
+        print(f"期末资金: {self.cerebro.broker.getvalue():.2f}")
+        print(f"总收益率: {analyzers.returns.get_analysis()}%")
+        print(f"年化收益率: {analyzers.returns.get_analysis()['rnorm100']:.2f}%")
+        print(f"夏普比率: {analyzers.sharpe.get_analysis()['sharperatio']}")
+        print(f"最大回撤: {analyzers.drawdown.get_analysis().max.drawdown:.2f}%")
+        print(f"最长回撤周期: {analyzers.drawdown.get_analysis().max.len} 根K线")
+        
+        trade_analysis = analyzers.trades.get_analysis()
+        print("\n====== 交易统计 ======")
+        print(f"总交易次数: {trade_analysis.total.closed}")
+        print(f"胜率: {trade_analysis.won.total/trade_analysis.total.closed*100:.1f}%")
+        print(f"盈亏比: {trade_analysis.won.pnl.average/abs(trade_analysis.lost.pnl.average):.2f}")
+    
 
 if __name__=="__main__":
     from strategy.dual_ma import DualMovingAverageStrategy
