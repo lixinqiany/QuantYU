@@ -4,7 +4,8 @@
         "fixed_tax": 1.5,
         "mult": 10, 
         "stocklike": false,
-        "margin": 0.1,
-        "commtype": "COMM_FIXED"
+        "margin": 0.07,
+        "commtype": "COMM_FIXED",
+        "unit": 1
     }
 }
